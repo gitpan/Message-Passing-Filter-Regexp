@@ -1,0 +1,6 @@
+Revision history for Perl extension Message::Passing::Filter::Regexp.
+
+0.01  Sat Dec 22 15:05:40 2012
+	- original version; created by h2xs 1.23 with options
+		-XA -n Message::Passing::Filter::Regexp
+
