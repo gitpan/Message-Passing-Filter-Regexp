@@ -3,15 +3,16 @@ use 5.014002;
 use strict;
 use warnings;
 use Moo;
-use MooX::Types::MooseLike::Base qw/ ArrayRef Str /;
+use MooX::Types::MooseLike::Base qw/ HashRef ArrayRef Str /;
 use namespace::clean -except => 'meta';
 use DateTime;
+use JSON::Types;
 use Message::Passing::Filter::Regexp::Log;
 
 with qw/ Message::Passing::Role::Filter /;
 use vars qw( $VERSION );
 
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 has format => (
     is => 'ro',
@@ -29,6 +30,12 @@ has capture => (
     is => 'ro',
     isa => ArrayRef,
     default => sub { [] }, 
+);
+
+has mutate => (
+    is => 'ro',
+    isa => HashRef,
+    default => sub { {} },
 );
 
 has _regex => (
@@ -53,6 +60,10 @@ sub filter {
     my @fields = $self->_regex->capture;
     my $re = $self->_regex->regexp;
     @data{@fields} = $log_line =~ /$re/;
+    for ( keys %{ $self->mutate } ) {
+        my $type = $self->mutate->{$_};
+        $data{$_} = eval "$type $data{$_}";
+    };
     $message->{'@fields'} = {
         %data,
     };

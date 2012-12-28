@@ -9,6 +9,7 @@ WriteMakefile(
         'Message::Passing' => 0.11,
         'Config::Tiny' => 0,
         'Regexp::Log' => 0,
+        'JSON::Types' => 0,
     },
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Message/Passing/Filter/Regexp.pm', # retrieve abstract from module
