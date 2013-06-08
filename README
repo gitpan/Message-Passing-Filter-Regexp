@@ -60,7 +60,7 @@ DESCRIPTION
     This filter passes all incoming messages through with regexp captures.
     Note it must be running after Message::Passing::Filter::ToLogstash
     because it don't process with json format but directly capture
-    "$message-"{'@message'}> data lines into "%{ $message-"{'@fields'} }>
+    "$message->{'@message'}" data lines into "%{ $message->{'@fields'} }"
 
 ATTRIBUTES
   regexfile
@@ -73,16 +73,12 @@ ATTRIBUTES
     ArrayRef of regex names which you want to capture and has been defined
     in your regexfile. note delete the prefix "%".
 
-TODO
-    Need to keep numberic type for json. "to_json" will make all element to
-    be "string". That's bad for elasticsearch term_stats API.
-
 SEE ALSO
     Capture Idea steal from <http://logstash.net> Grok filter Config Format
     steal from <http://oss.oetiker.ch/smokeping> use Config::Grammar
 
 AUTHOR
-    chenryn, <rao.chenlin@gmail.com<gt>
+    chenryn, <rao.chenlin@gmail.com>
 
 COPYRIGHT AND LICENSE
     Copyright (C) 2012 by chenryn

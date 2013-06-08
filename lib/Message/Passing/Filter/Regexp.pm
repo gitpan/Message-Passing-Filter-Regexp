@@ -3,7 +3,7 @@ use 5.014002;
 use strict;
 use warnings;
 use Moo;
-use MooX::Types::MooseLike::Base qw/ HashRef ArrayRef Str /;
+use MooX::Types::MooseLike::Base qw/ HashRef ArrayRef Str RegexpRef /;
 use namespace::clean -except => 'meta';
 use DateTime;
 use JSON::Types;
@@ -12,36 +12,50 @@ use Message::Passing::Filter::Regexp::Log;
 with qw/ Message::Passing::Role::Filter /;
 use vars qw( $VERSION );
 
-$VERSION = 0.02;
+$VERSION = 0.03;
 
 has format => (
-    is => 'ro',
-    isa => Str,
+    is      => 'ro',
+    isa     => Str,
     default => sub { ':default' },
 );
 
 has regexfile => (
-    is => 'ro',
-    isa => Str,
+    is      => 'ro',
+    isa     => Str,
     default => sub { '/etc/message-passing/regexfile' },
 );
 
 has capture => (
-    is => 'ro',
-    isa => ArrayRef,
-    default => sub { [] }, 
+    is      => 'ro',
+    isa     => ArrayRef,
+    default => sub { [] },
 );
 
 has mutate => (
-    is => 'ro',
-    isa => HashRef,
+    is      => 'ro',
+    isa     => HashRef,
     default => sub { {} },
 );
 
 has _regex => (
-    is => 'ro',
-    lazy => 1,
+    is      => 'ro',
+    lazy    => 1,
     builder => '_build_regex',
+);
+
+has _re => (
+    is      => 'ro',
+    isa     => RegexpRef,
+    lazy    => 1,
+    builder => '_build_re',
+);
+
+has _fields => (
+    is      => 'ro',
+    isa     => ArrayRef,
+    lazy    => 1,
+    builder => '_build_fields',
 );
 
 sub _build_regex {
@@ -51,27 +65,33 @@ sub _build_regex {
         capture   => $self->capture,
         regexfile => $self->regexfile,
     );
-};
+}
+
+sub _build_re {
+    my $self = shift;
+    return $self->_regex->regexp;
+}
+
+sub _build_fields {
+    my $self = shift;
+    return [ $self->_regex->capture ];
+}
 
 sub filter {
-    my ($self, $message) = @_;
+    my ( $self, $message ) = @_;
     my $log_line = $message->{'@message'};
     my %data;
-    my @fields = $self->_regex->capture;
-    my $re = $self->_regex->regexp;
-    @data{@fields} = $log_line =~ /$re/;
+    my $re = $self->_re;
+    @data{ @{ $self->_fields } } = $log_line =~ /$re/;
     for ( keys %{ $self->mutate } ) {
         my $type = $self->mutate->{$_};
         $data{$_} = eval "$type $data{$_}";
-    };
-    $message->{'@fields'} = {
-        %data,
-    };
+    }
+    $message->{'@fields'} = { %data };
     return $message;
 }
 
 1;
-
 
 1;
 __END__
@@ -153,10 +173,6 @@ Name of a defined format in your regexfile.
 =head2 capture
 
 ArrayRef of regex names which you want to capture and has been defined in your regexfile. note delete the prefix C<%>.
-
-=head1 TODO
-
-Need to keep numberic type for json. C<to_json> will make all element to be "string". That's bad for elasticsearch term_stats API.
 
 =head1 SEE ALSO
 
